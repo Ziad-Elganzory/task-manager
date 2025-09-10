@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\DuplicateEmailException;
+use App\Exceptions\InvalidCredentialsException;
+use App\Http\Requests\LoginUserRequest;
+use App\Http\Requests\RegisterUserRequest;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -9,20 +14,14 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function __construct(protected UserService $userService) {}
+
+    public function register(RegisterUserRequest $request)
     {
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|string|email|unique:users',
-                'password' => 'required|string|min:8|confirmed',
-            ]);
+            $validatedData = $request->validated();
 
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-            ]);
+            $user = $this->userService->registerUser($validatedData);
 
             return response()->json([
                 'message' => 'User registered successfully!',
@@ -33,6 +32,11 @@ class AuthController extends Controller
                 'message' => 'Validation failed.',
                 'errors' => $e->errors(),
             ], 422);
+        } catch (DuplicateEmailException $e) {
+            return response()->json([
+                'message' => 'The email has already been taken.',
+                'error' => $e->getMessage(),
+            ], 409);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Registration failed.',
@@ -41,36 +45,30 @@ class AuthController extends Controller
         }
     }
 
-    public function login(Request $request)
+    public function login(LoginUserRequest $request)
     {
         try {
-            $validated = $request->validate([
-                'email' => 'required|email',
-                'password' => 'required',
-            ]);
+            $validatedData = $request->validated();
 
-            $user = User::where('email', $validated['email'])->first();
-
-            if (!$user || !Hash::check($validated['password'], $user->password)) {
-                return response()->json([
-                    'message' => 'The provided credentials are incorrect.'
-                ], 401);
-            }
-
-            $token = $user->createToken('api-token')->plainTextToken;
-
+            ['user' => $user, 'token' => $token] = $this->userService->getUserToken($validatedData);
             return response()->json([
                 'message' => 'Login successful!',
+                'user' => $user,
                 'token' => $token,
             ]);
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed.',
                 'errors' => $e->errors(),
-            ], 422);
+            ], 400);
+        } catch (InvalidCredentialsException $e) {
+            return response()->json([
+                'message' => 'Login Failed.',
+                'error' => $e->getMessage(),
+            ], 400);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Login failed.',
+                'message' => 'Login Failed.',
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -80,9 +78,8 @@ class AuthController extends Controller
     {
         try {
             $user = $request->user();
-            if ($user && $user->currentAccessToken()) {
-                $user->currentAccessToken()->delete();
-            }
+            $this->userService->userLogout($user);
+
             return response()->json([
                 'message' => 'Logged out successfully!',
             ]);
@@ -92,5 +89,5 @@ class AuthController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
-    }
+    }   
 }

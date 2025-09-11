@@ -158,7 +158,7 @@ cp .env.example .env
 - **phpMyAdmin**: `http://localhost:8080`
 - **Database**: Available on port `3306`
 
-## 👥 Default Users
+## Default Users
 
 After seeding, you can use these test accounts:
 
@@ -199,6 +199,43 @@ POST   /api/tasks/{id}/dependencies              # Add dependency
 DELETE /api/tasks/{id}/dependencies/{depends_on} # Remove dependency
 ```
 
+## 🧪 API Testing with Postman
+
+A complete **Postman collection** is included in this repository for easy API testing:
+
+📁 **File**: `Task Management API.postman_collection.json`
+
+### Import Instructions:
+1. Open Postman
+2. Click **Import** button
+3. Select **Upload Files** 
+4. Choose `Task Management API.postman_collection.json` from the project root
+5. Click **Import**
+
+### What's Included:
+- ✅ **Authentication endpoints** (Register, Login, Logout)
+- ✅ **Task CRUD operations** with proper authorization tests
+- ✅ **Task filtering** examples with query parameters
+- ✅ **Task dependencies** management (Create, List, Delete)
+- ✅ **Role-based access testing** (Manager vs User permissions)
+- ✅ **Error handling examples** (404, 403, 422 status codes)
+- ✅ **Pre-configured test data** and environment variables
+
+### Quick Start with Postman:
+1. Import the collection
+2. Run the **"Login as Manager"** request first
+3. The token will be automatically saved for subsequent requests
+4. Test any endpoint in the collection!
+
+### 🔑 Token Management:
+The collection automatically manages authentication tokens:
+- **Manager Login**: Stores token in both `auth_token` and `manager_token` variables
+- **User Login**: Stores token in both `auth_token` and `user_token` variables  
+- **Auto-switching**: Use `{{auth_token}}` in requests - it automatically uses the last login token
+- **Role Testing**: Use `{{manager_token}}` or `{{user_token}}` to test specific role permissions
+
+This allows easy switching between Manager and User contexts for testing role-based access control!
+
 ### Query Parameters for Task Filtering
 ```bash
 GET /api/tasks?status=pending
@@ -222,7 +259,7 @@ curl -X GET http://localhost/api/tasks \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
-## 🧪 Development Commands
+## Development Commands
 
 ```bash
 

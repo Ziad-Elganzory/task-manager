@@ -198,12 +198,20 @@ GET    /api/tasks/{id}/dependencies              # List task dependencies
 POST   /api/tasks/{id}/dependencies              # Add dependency
 DELETE /api/tasks/{id}/dependencies/{depends_on} # Remove dependency
 ```
+### Query Parameters for Task Filtering
+```bash
+GET /api/tasks?status=pending
+GET /api/tasks?due_date_from=2025-01-01&due_date_to=2025-12-31
+GET /api/tasks?assigned_to=1
+GET /api/tasks?status=completed&assigned_to=2
+```
 
-## 🧪 API Testing with Postman
+
+## API Testing with Postman
 
 A complete **Postman collection** is included in this repository for easy API testing:
 
-📁 **File**: `Task Management API.postman_collection.json`
+**File**: `Task Management API.postman_collection.json`
 
 ### Import Instructions:
 1. Open Postman
@@ -213,13 +221,13 @@ A complete **Postman collection** is included in this repository for easy API te
 5. Click **Import**
 
 ### What's Included:
-- ✅ **Authentication endpoints** (Register, Login, Logout)
-- ✅ **Task CRUD operations** with proper authorization tests
-- ✅ **Task filtering** examples with query parameters
-- ✅ **Task dependencies** management (Create, List, Delete)
-- ✅ **Role-based access testing** (Manager vs User permissions)
-- ✅ **Error handling examples** (404, 403, 422 status codes)
-- ✅ **Pre-configured test data** and environment variables
+- **Authentication endpoints** (Register, Login, Logout)
+- **Task CRUD operations** with proper authorization tests
+- **Task filtering** examples with query parameters
+- **Task dependencies** management (Create, List, Delete)
+- **Role-based access testing** (Manager vs User permissions)
+- **Error handling examples** (404, 403, 422 status codes)
+- **Pre-configured test data** and environment variables
 
 ### Quick Start with Postman:
 1. Import the collection
@@ -227,7 +235,7 @@ A complete **Postman collection** is included in this repository for easy API te
 3. The token will be automatically saved for subsequent requests
 4. Test any endpoint in the collection!
 
-### 🔑 Token Management:
+### Token Management:
 The collection automatically manages authentication tokens:
 - **Manager Login**: Stores token in both `auth_token` and `manager_token` variables
 - **User Login**: Stores token in both `auth_token` and `user_token` variables  
@@ -236,13 +244,6 @@ The collection automatically manages authentication tokens:
 
 This allows easy switching between Manager and User contexts for testing role-based access control!
 
-### Query Parameters for Task Filtering
-```bash
-GET /api/tasks?status=pending
-GET /api/tasks?due_date_from=2025-01-01&due_date_to=2025-12-31
-GET /api/tasks?assigned_to=1
-GET /api/tasks?status=completed&assigned_to=2
-```
 
 ## Authentication
 

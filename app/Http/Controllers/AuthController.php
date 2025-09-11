@@ -27,21 +27,8 @@ class AuthController extends Controller
                 'message' => 'User registered successfully!',
                 'user' => $user,
             ], 201);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed.',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (DuplicateEmailException $e) {
-            return response()->json([
-                'message' => 'The email has already been taken.',
-                'error' => $e->getMessage(),
-            ], 409);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Registration failed.',
-                'error' => $e->getMessage(),
-            ], 500);
+            return response()->json(['error' => $e->getMessage()], $e->getCode());
         }
     }
 
@@ -56,21 +43,10 @@ class AuthController extends Controller
                 'user' => $user,
                 'token' => $token,
             ]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed.',
-                'errors' => $e->errors(),
-            ], 400);
-        } catch (InvalidCredentialsException $e) {
-            return response()->json([
-                'message' => 'Login Failed.',
-                'error' => $e->getMessage(),
-            ], 400);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Login Failed.',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], $e->getCode());
         }
     }
 
@@ -85,9 +61,8 @@ class AuthController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Logout failed.',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], $e->getCode());
         }
-    }   
+    }
 }

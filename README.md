@@ -1,62 +1,262 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Task Management System
+
+A comprehensive task management API built with Laravel 11, featuring role-based access control, task dependencies, and soft deletes.
+
+## Features
+
+- **User Authentication** with Laravel Sanctum
+- **Role-Based Access Control** (Managers and Users)
+- **Task Management** with CRUD operations
+- **Task Dependencies** (tasks can depend on other tasks)
+- **Soft Deletes** for tasks
+- **API Filtering** by status, due date, and assigned user
+- **Business Logic** enforcement (dependency completion rules)
+
+## Tech Stack
+
+- **Backend**: Laravel 12, PHP 8.4
+- **Database**: MySQL 8.0
+- **Authentication**: Laravel Sanctum
+- **Authorization**: Spatie Laravel Permission
+- **Containerization**: Docker with Laravel Sail
+- **API Documentation**: RESTful API
+
+## Database Schema
+
+```mermaid
+erDiagram
+    USERS {
+        bigint id PK
+        string name
+        string email UK
+        string password
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    TASKS {
+        bigint id PK
+        string title
+        text description
+        enum status
+        date due_date
+        bigint assigned_to FK
+        bigint created_by FK
+        timestamp deleted_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    TASK_DEPENDENCIES {
+        bigint id PK
+        bigint task_id FK
+        bigint depends_on_task_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    ROLES {
+        bigint id PK
+        string name
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    MODEL_HAS_ROLES {
+        bigint role_id FK
+        string model_type
+        bigint model_id FK
+    }
+
+    %% One-to-Many Relationships
+    USERS ||--o{ TASKS : "is_assigned_to (1:M)"
+    USERS ||--o{ TASKS : "creates (1:M)"
+
+    %% Many-to-Many Self-Referencing (Unary)
+    TASKS ||--o{ TASK_DEPENDENCIES : "has_dependencies"
+    TASKS ||--o{ TASK_DEPENDENCIES : "is_dependency_for"
+
+    %% Many-to-Many Polymorphic
+    USERS ||--o{ MODEL_HAS_ROLES : "user_roles"
+    ROLES ||--o{ MODEL_HAS_ROLES : "role_assignments"
+```
+
+### **Relationship Types:**
+
+1. **USERS → TASKS (assigned_to)**
+   - Type: One-to-Many (1:M)
+   - One user can be assigned multiple tasks
+   - Each task assigned to max one user
+
+2. **USERS → TASKS (created_by)**
+   - Type: One-to-Many (1:M)
+   - One user can create multiple tasks
+   - Each task created by exactly one user
+
+3. **TASKS ↔ TASKS (dependencies)**
+   - Type: Many-to-Many Self-Referencing (M:M Unary)
+   - Tasks can depend on multiple other tasks
+   - Tasks can be dependencies for multiple tasks
+   - Uses junction table: TASK_DEPENDENCIES
+
+4. **USERS ↔ ROLES**
+   - Type: Many-to-Many Polymorphic (M:M)
+   - Users can have multiple roles
+   - Roles can be assigned to multiple users
+   - Uses junction table: MODEL_HAS_ROLES
+
+### **Key Conceptual Features:**
+- **Unary Relationship**: Tasks self-reference for dependencies
+- **Polymorphic Relationship**: Flexible role assignment system
+- **Junction Tables**: Explicit M:M implementation
+- **Business Rules**: Dependency completion constraints
 
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Prerequisites
 
-## About Laravel
+- composer
+- Docker & Docker Compose
+- Git
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Quick Setup
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Ziad-Elganzory/task-manager.git
+cd task-manager
+```
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 2. Install Dependencies
 
-## Learning Laravel
+```bash
+composer install
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 3. Environment Setup
+```bash
+# Copy environment file
+cp .env.example .env
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+# Generate application key
+./vendor/bin/sail artisan key:generate
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 4. Start the Application
+```bash
+# Start Docker containers
+./vendor/bin/sail up -d
 
-## Laravel Sponsors
+# Run database migrations
+./vendor/bin/sail artisan migrate
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# Seed the database with roles and test users
+./vendor/bin/sail artisan db:seed
+```
 
-### Premium Partners
+### 5. Access the Application
+- **API Base URL**: `http://localhost`
+- **phpMyAdmin**: `http://localhost:8080`
+- **Database**: Available on port `3306`
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## 👥 Default Users
 
-## Contributing
+After seeding, you can use these test accounts:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Managers (can create/read/update/delete tasks, assign to users):
+- **Email**: `manager@example.com` | **Password**: `password`
+- **Email**: `ziad.manager@example.com` | **Password**: `password`
 
-## Code of Conduct
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Users (can view assigned tasks, update status only):
+- **Email**: `user@example.com` | **Password**: `password`
+- **Email**: `ziad.developer@example.com` | **Password**: `password`
 
-## Security Vulnerabilities
+## 🔧 API Endpoints
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Authentication
+```bash
+POST /api/register          # Register new user
+POST /api/login             # Login user
+POST /api/logout            # Logout user (authenticated)
+GET  /api/user              # Get current user (authenticated)
+```
 
-## License
+### Tasks
+```bash
+GET    /api/tasks           # List tasks (with filters)
+POST   /api/tasks           # Create task (managers only)
+GET    /api/tasks/{id}      # Get task details
+PUT    /api/tasks/{id}      # Update task
+PATCH  /api/tasks/{id}      # Partial update task
+DELETE /api/tasks/{id}      # Soft delete task (managers only)
+DELETE /api/tasks/{id}/force # Force delete task (managers only)
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Task Dependencies
+```bash
+GET    /api/tasks/{id}/dependencies              # List task dependencies
+POST   /api/tasks/{id}/dependencies              # Add dependency
+DELETE /api/tasks/{id}/dependencies/{depends_on} # Remove dependency
+```
+
+### Query Parameters for Task Filtering
+```bash
+GET /api/tasks?status=pending
+GET /api/tasks?due_date_from=2025-01-01&due_date_to=2025-12-31
+GET /api/tasks?assigned_to=1
+GET /api/tasks?status=completed&assigned_to=2
+```
+
+## Authentication
+
+1. **Login** to get an API token:
+```bash
+curl -X POST http://localhost/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "manager@example.com", "password": "password"}'
+```
+
+2. **Use the token** in subsequent requests:
+```bash
+curl -X GET http://localhost/api/tasks \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+## 🧪 Development Commands
+
+```bash
+
+# Reset database with fresh data
+./vendor/bin/sail artisan migrate:fresh --seed
+
+# Stop containers
+./vendor/bin/sail down
+```
+
+## Project Structure
+
+```
+app/
+├── Http/Controllers/     # API Controllers
+├── Models/              # Eloquent Models
+├── Policies/            # Authorization Policies
+├── Repositories/        # Data Access Layer
+├── Services/           # Business Logic Layer
+└── Http/Requests/      # Form Request Validation
+
+database/
+├── migrations/         # Database Migrations
+└── seeders/           # Database Seeders
+
+routes/
+└── api.php            # API Routes
+```
+
+
+### Reset Everything:
+```bash
+./vendor/bin/sail down -v
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan migrate:fresh --seed
+```
+
